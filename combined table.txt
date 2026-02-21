@@ -1,0 +1,109 @@
+-- =====================================================
+--  COMPLETE SEARCH INDEX SETUP (FIXED - NO my_row_id)
+-- =====================================================
+
+-- STEP 1: DROP AND CREATE TABLE
+DROP TABLE IF EXISTS sanctions_search_index;
+
+CREATE TABLE sanctions_search_index (
+  NAME TEXT,
+  TYPE TEXT,
+  SOURCE TEXT,
+  ID VARCHAR(100),
+  DOB TEXT,
+  NATIONALITY TEXT,
+  tableName VARCHAR(100),
+  search_text LONGTEXT,
+  FULLTEXT(search_text)
+) ENGINE=InnoDB;
+
+-- STEP 2: BUILD INDEX
+INSERT INTO sanctions_search_index
+
+/* ================= us_details ================= */
+SELECT 
+  CONCAT_WS(' ', FIRST_NAME, LAST_NAME),
+  SDN_TYPE, 'US', CAST(ID AS CHAR),
+  NULL, NULL, 'us_details',
+  CONCAT_WS(' ',
+    CAST(ID AS CHAR), CAST(uid AS CHAR),
+    IFNULL(FIRST_NAME,''), IFNULL(LAST_NAME,''), IFNULL(SDN_TYPE,''), 
+    IFNULL(REMARKS,''), IFNULL(FULL_DATA,'')
+  )
+FROM us_details
+
+UNION ALL
+
+/* ================= us_details_v ================= */
+SELECT 
+  CONCAT_WS(' ', FIRSTNAME, LASTNAME),
+  SDNTYPE, 'US', CAST(A_ID AS CHAR),
+  DATEOFBIRTHLIST, NULL, 'us_details_v',
+  CONCAT_WS(' ',
+    CAST(A_ID AS CHAR), CAST(ID AS CHAR),
+    IFNULL(FIRSTNAME,''), IFNULL(LASTNAME,''), IFNULL(SDNTYPE,''),
+    IFNULL(PROGRAM_LIST,''), IFNULL(AKALIST,''), IFNULL(ADDRESSLIST,'')
+  )
+FROM us_details_v
+
+UNION ALL
+
+/* ================= uk_details ================= */
+SELECT 
+  NAME, TYPE_, SOURCE_, CAST(ID AS CHAR),
+  DOB, NATIONALITY, 'uk_details',
+  CONCAT_WS(' ',
+    CAST(ID AS CHAR),
+    IFNULL(NAME,''), IFNULL(TYPE_,''), IFNULL(DOB,''), 
+    IFNULL(NATIONALITY,''), IFNULL(ADDRESS,''), IFNULL(AKA,'')
+  )
+FROM uk_details
+
+UNION ALL
+
+/* ================= un_details ================= */
+SELECT 
+  NAME, TYPE_, SOURCE, CAST(AUTO_ID AS CHAR),
+  DOB, NATIONALITY, 'un_details',
+  CONCAT_WS(' ',
+    CAST(AUTO_ID AS CHAR),
+    IFNULL(NAME,''), IFNULL(TYPE_,''), IFNULL(DOB,''),
+    IFNULL(NATIONALITY,''), IFNULL(ADDRESS,''), IFNULL(AKA,'')
+  )
+FROM un_details
+
+UNION ALL
+
+/* ================= eu_details ================= */
+SELECT 
+  COMPANY_NAME, PROGRAMME, SOURCE_, CAST(ID AS CHAR),
+  NULL, NULL, 'eu_details',
+  CONCAT_WS(' ',
+    CAST(ID AS CHAR),
+    IFNULL(COMPANY_NAME,''), IFNULL(PROGRAMME,''), IFNULL(REMARK,'')
+  )
+FROM eu_details
+
+UNION ALL
+
+/* ================= eu_sanctioned_vessels_test ================= */
+SELECT 
+  VESSEL_NAME, 'Vessel', SOURCE, CAST(ID AS CHAR),
+  NULL, NULL, 'eu_sanctioned_vessels_test',
+  CONCAT_WS(' ',
+    CAST(ID AS CHAR),
+    IFNULL(VESSEL_NAME,''), IFNULL(IMO,'')
+  )
+FROM eu_sanctioned_vessels_test
+
+UNION ALL
+
+/* ================= ofac_file_hashes ================= */
+SELECT 
+  FILE_NAME, 'File', 'OFAC', FILE_NAME,
+  NULL, NULL, 'ofac_file_hashes',
+  CONCAT_WS(' ',
+    IFNULL(FILE_NAME,''), IFNULL(MD5_HASH,'')
+  )
+FROM ofac_file_hashes;
+

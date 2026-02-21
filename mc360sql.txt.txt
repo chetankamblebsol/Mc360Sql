@@ -1,0 +1,489 @@
+✅ DESC eu_details
++---------------------------+--------+------+-----+---------+-------+
+| Field                     | Type   | Null | Key | Default | Extra |
++---------------------------+--------+------+-----+---------+-------+
+||
+| ID                        | bigint | YES  |     | NULL    |       |
+| EU_ID                     | text   | YES  |     | NULL    |       |
+| SOURCE_                   | text   | YES  |     | NULL    |       |
+| LEGAL_BASIS               | text   | YES  |     | NULL    |       |
+| PROGRAMME                 | text   | YES  |     | NULL    |       |
+| IDENTITY_INFORMATION      | text   | YES  |     | NULL    |       |
+| BIRTH_INFORMATION         | text   | YES  |     | NULL    |       |
+| CONTACT_INFORMATION       | text   | YES  |     | NULL    |       |
+| CITIZENSHIP_INFORMATION   | text   | YES  |     | NULL    |       |
+| IDENTIFICATION_DOCU_INFO  | text   | YES  |     | NULL    |       |
+| REMARK                    | text   | YES  |     | NULL    |       |
+| COMPANY_NAME              | text   | YES  |     | NULL    |       |
+| INSERTED_ON               | text   | YES  |     | NULL    |       |
+| UPDATED_ON                | text   | YES  |     | NULL    |       |
++---------------------------+--------+------+-----+---------+-------+
+
+✅ DESC eu_sanctioned_vessels_test
++---------------------+--------+------+-----+---------+-------+
+| Field               | Type   | Null | Key | Default | Extra |
++---------------------+--------+------+-----+---------+-------+
+|  |
+| ID                  | bigint | YES  |     | NULL    |       |
+| DOC_SRNO            | bigint | YES  |     | NULL    |       |
+| VESSEL_NAME         | text   | YES  |     | NULL    |       |
+| IMO                 | bigint | YES  |     | NULL    |       |
+| SOURCE              | text   | YES  |     | NULL    |       |
+| EU_JOURNAL_LINK     | text   | YES  |     | NULL    |       |
+| DATE_OF_APPLICATION | text   | YES  |     | NULL    |       |
+| INSERTED_ON         | text   | YES  |     | NULL    |       |
+| UPDATED_ON          | text   | YES  |     | NULL    |       |
++---------------------+--------+------+-----+---------+-------+
+
+✅ DESC job_last_run_date
++---------------+--------+------+-----+---------+-------+
+| Field         | Type   | Null | Key | Default | Extra |
++---------------+--------+------+-----+---------+-------+
+| |
+| LAST_RUN_DATE | text   | YES  |     | NULL    |       |
++---------------+--------+------+-----+---------+-------+
+
+✅ DESC ofac_file_hashes
++------------+--------+------+-----+---------+-------+
+| Field      | Type   | Null | Key | Default | Extra |
++------------+--------+------+-----+---------+-------+
+| |
+| FILE_NAME  | text   | YES  |     | NULL    |       |
+| MD5_HASH   | text   | YES  |     | NULL    |       |
++------------+--------+------+-----+---------+-------+
+
+✅ DESC uk_details
++----------------------+--------+------+-----+---------+-------+
+| Field                | Type   | Null | Key | Default | Extra |
++----------------------+--------+------+-----+---------+-------+
+
+| ID                   | bigint | YES  |     | NULL    |       |
+| SOURCE_              | text   | YES  |     | NULL    |       |
+| NAME                 | text   | YES  |     | NULL    |       |
+| TYPE_                | text   | YES  |     | NULL    |       |
+| NAME_NON_LATIN_SCRIPT| text   | YES  |     | NULL    |       |
+| DOB                  | text   | YES  |     | NULL    |       |
+| POB                  | text   | YES  |     | NULL    |       |
+| GOOD_QUALITY_AKA     | text   | YES  |     | NULL    |       |
+| NATIONALITY          | text   | YES  |     | NULL    |       |
+| ADDRESS              | text   | YES  |     | NULL    |       |
+| POSITION_            | text   | YES  |     | NULL    |       |
+| TITLE                | double | YES  |     | NULL    |       |
+| OTHER_INFORMATION    | text   | YES  |     | NULL    |       |
+| UK_SANCTIONS_LIST    | text   | YES  |     | NULL    |       |
+| LAST_UPDATED         | text   | YES  |     | NULL    |       |
+| GROUP_ID             | text   | YES  |     | NULL    |       |
+| LISTED_ON            | double | YES  |     | NULL    |       |
+| AKA                  | text   | YES  |     | NULL    |       |
+| INSERTED_ON          | text   | YES  |     | NULL    |       |
+| UPDATED_ON           | text   | YES  |     | NULL    |       |
+| LOW_QUALITY_AKA      | double | YES  |     | NULL    |       |
+| PASSPORT_NUMBER      | text   | YES  |     | NULL    |       |
++----------------------+--------+------+-----+---------+-------+
+
+✅ DESC un_details
+AUTO_ID bigint
+ID text
+TYPE_ text
+NAME text
+NAME_ORIGINAL_SCRIPT text
+TITLE text
+DESIGNATION text
+DOB text
+POB text
+GOOD_QUALITY_AKA text
+LOW_QUALITY_AKA text
+NATIONALITY text
+PASSPORT_NO text
+NATIONAL_IDENTITY_NO text
+ADDRESS text
+LISTED_ON text
+OTHER_INFORMATION text
+SOURCE text
+AKA text
+FKA text
+INSERTED_ON text
+UPDATED_ON text
+
+✅ DESC us_details
+
+ID bigint
+uid bigint
+FIRST_NAME text
+LAST_NAME text
+SDN_TYPE text
+REMARKS text
+FULL_DATA text
+INSERTED_ON text
+UPDATED_ON text
+
+✅ DESC us_details_v
+
+A_ID bigint
+ID bigint
+FIRSTNAME text
+LASTNAME text
+SDNTYPE text
+REMARKS text
+PROGRAM_LIST text
+IDLIST text
+AKALIST text
+ADDRESSLIST text
+DATEOFBIRTHLIST text
+PLACEOFBIRTHLIST text
+
+
+
+
+
+
+
+
+
+//PROCEDURE
+
+DROP PROCEDURE IF EXISTS global_search_proc;
+
+DELIMITER $$
+
+CREATE PROCEDURE global_search_proc(
+  IN p_name VARCHAR(255),
+  IN p_type VARCHAR(255),
+  IN p_source VARCHAR(255),
+  IN p_limit INT,
+  IN p_offset INT
+)
+BEGIN
+
+SET @s = CONCAT('%', p_name, '%');
+SET @typeLike = CONCAT('%', p_type, '%');
+SET @sourceLike = CONCAT('%', p_source, '%');
+
+SELECT
+  NAME,
+  TYPE,
+  SOURCE,
+  ID,
+  DOB,
+  NATIONALITY,
+  tableName,
+  SCORE AS MATCH_PERCENT,
+  CASE
+    WHEN SCORE >= 80 THEN 'High'
+    WHEN SCORE >= 50 THEN 'Medium'
+    ELSE 'Low'
+  END AS MATCH_LEVEL
+FROM (
+
+SELECT
+  CONCAT_WS(' ', FIRST_NAME, LAST_NAME) AS NAME,
+  SDN_TYPE AS TYPE,
+  'US' AS SOURCE,
+  ID,
+  NULL AS DOB,
+  NULL AS NATIONALITY,
+  'us_details' AS tableName,
+  CASE
+    WHEN ID = p_name THEN 100
+    WHEN CONCAT_WS(' ', FIRST_NAME, LAST_NAME) COLLATE utf8mb4_unicode_ci LIKE CONCAT(p_name, '%') COLLATE utf8mb4_unicode_ci THEN 90
+    WHEN CONCAT_WS(' ', FIRST_NAME, LAST_NAME) COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', p_name, '%') COLLATE utf8mb4_unicode_ci THEN 75
+    ELSE 50
+  END AS SCORE
+FROM us_details
+WHERE ID LIKE @s COLLATE utf8mb4_unicode_ci
+   OR FIRST_NAME LIKE @s COLLATE utf8mb4_unicode_ci
+   OR LAST_NAME LIKE @s COLLATE utf8mb4_unicode_ci
+   OR SDN_TYPE LIKE @s COLLATE utf8mb4_unicode_ci
+
+UNION ALL
+
+SELECT
+  CONCAT_WS(' ', FIRSTNAME, LASTNAME),
+  SDNTYPE,
+  'US',
+  A_ID,
+  DATEOFBIRTHLIST,
+  NULL,
+  'us_details_v',
+  CASE
+    WHEN A_ID = p_name THEN 100
+    WHEN CONCAT_WS(' ', FIRSTNAME, LASTNAME) COLLATE utf8mb4_unicode_ci LIKE CONCAT(p_name, '%') COLLATE utf8mb4_unicode_ci THEN 90
+    WHEN CONCAT_WS(' ', FIRSTNAME, LASTNAME) COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', p_name, '%') COLLATE utf8mb4_unicode_ci THEN 75
+    ELSE 50
+  END
+FROM us_details_v
+WHERE A_ID LIKE @s COLLATE utf8mb4_unicode_ci
+   OR FIRSTNAME LIKE @s COLLATE utf8mb4_unicode_ci
+   OR LASTNAME LIKE @s COLLATE utf8mb4_unicode_ci
+   OR SDNTYPE LIKE @s COLLATE utf8mb4_unicode_ci
+
+UNION ALL
+
+SELECT
+  NAME,
+  TYPE_,
+  SOURCE_,
+  ID,
+  DOB,
+  NATIONALITY,
+  'uk_details',
+  CASE
+    WHEN ID = p_name THEN 100
+    WHEN NAME COLLATE utf8mb4_unicode_ci LIKE CONCAT(p_name, '%') COLLATE utf8mb4_unicode_ci THEN 90
+    WHEN NAME COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', p_name, '%') COLLATE utf8mb4_unicode_ci THEN 75
+    ELSE 50
+  END
+FROM uk_details
+WHERE ID LIKE @s COLLATE utf8mb4_unicode_ci
+   OR NAME LIKE @s COLLATE utf8mb4_unicode_ci
+   OR TYPE_ LIKE @s COLLATE utf8mb4_unicode_ci
+   OR SOURCE_ LIKE @s COLLATE utf8mb4_unicode_ci
+
+UNION ALL
+
+SELECT
+  NAME,
+  TYPE_,
+  SOURCE,
+  AUTO_ID,
+  DOB,
+  NATIONALITY,
+  'un_details',
+  CASE
+    WHEN AUTO_ID = p_name THEN 100
+    WHEN NAME COLLATE utf8mb4_unicode_ci LIKE CONCAT(p_name, '%') COLLATE utf8mb4_unicode_ci THEN 90
+    WHEN NAME COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', p_name, '%') COLLATE utf8mb4_unicode_ci THEN 75
+    ELSE 50
+  END
+FROM un_details
+WHERE AUTO_ID LIKE @s COLLATE utf8mb4_unicode_ci
+   OR NAME LIKE @s COLLATE utf8mb4_unicode_ci
+   OR TYPE_ LIKE @s COLLATE utf8mb4_unicode_ci
+   OR SOURCE LIKE @s COLLATE utf8mb4_unicode_ci
+
+UNION ALL
+
+SELECT
+  COMPANY_NAME,
+  PROGRAMME,
+  SOURCE_,
+  ID,
+  NULL,
+  NULL,
+  'eu_details',
+  CASE
+    WHEN ID = p_name THEN 100
+    WHEN COMPANY_NAME COLLATE utf8mb4_unicode_ci LIKE CONCAT(p_name, '%') COLLATE utf8mb4_unicode_ci THEN 90
+    WHEN COMPANY_NAME COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', p_name, '%') COLLATE utf8mb4_unicode_ci THEN 75
+    ELSE 50
+  END
+FROM eu_details
+WHERE ID LIKE @s COLLATE utf8mb4_unicode_ci
+   OR COMPANY_NAME LIKE @s COLLATE utf8mb4_unicode_ci
+   OR PROGRAMME LIKE @s COLLATE utf8mb4_unicode_ci
+   OR SOURCE_ LIKE @s COLLATE utf8mb4_unicode_ci
+
+UNION ALL
+
+SELECT
+  VESSEL_NAME,
+  'Vessel',
+  SOURCE,
+  ID,
+  NULL,
+  NULL,
+  'eu_sanctioned_vessels_test',
+  CASE
+    WHEN ID = p_name THEN 100
+    WHEN VESSEL_NAME COLLATE utf8mb4_unicode_ci LIKE CONCAT(p_name, '%') COLLATE utf8mb4_unicode_ci THEN 90
+    WHEN VESSEL_NAME COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', p_name, '%') COLLATE utf8mb4_unicode_ci THEN 75
+    ELSE 50
+  END
+FROM eu_sanctioned_vessels_test
+WHERE ID LIKE @s COLLATE utf8mb4_unicode_ci
+   OR VESSEL_NAME LIKE @s COLLATE utf8mb4_unicode_ci
+   OR SOURCE LIKE @s COLLATE utf8mb4_unicode_ci
+
+UNION ALL
+
+SELECT
+  FILE_NAME,
+  'File',
+  'OFAC',
+  my_row_id,
+  NULL,
+  NULL,
+  'ofac_file_hashes',
+  50
+FROM ofac_file_hashes
+WHERE FILE_NAME LIKE @s COLLATE utf8mb4_unicode_ci
+
+) AS combined
+
+WHERE
+  (p_type = '' OR TYPE LIKE @typeLike COLLATE utf8mb4_unicode_ci)
+  AND
+  (p_source = '' OR SOURCE LIKE @sourceLike COLLATE utf8mb4_unicode_ci)
+
+ORDER BY SCORE DESC, NAME ASC
+LIMIT p_limit OFFSET p_offset;
+
+END$$
+
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT
+  NAME,
+  TYPE,
+  SOURCE,
+  ID,
+  tableName,
+  SCORE AS MATCH_PERCENT,
+  CASE
+    WHEN SCORE >= 80 THEN 'High'
+    WHEN SCORE >= 50 THEN 'Medium'
+    ELSE 'Low'
+  END AS MATCH_LEVEL
+FROM (
+
+  /* 🇺🇸 us_details */
+  SELECT
+    CONCAT(FIRST_NAME,' ',LAST_NAME) AS NAME,
+    SDN_TYPE AS TYPE,
+    'US' AS SOURCE,
+    ID,
+    'us_details' AS tableName,
+    CASE
+      WHEN ID = ? THEN 100
+      WHEN CONCAT(FIRST_NAME,' ',LAST_NAME) LIKE CONCAT(?, '%') THEN 90
+      WHEN CONCAT(FIRST_NAME,' ',LAST_NAME) LIKE CONCAT('%', ?, '%') THEN 75
+      ELSE 50
+    END AS SCORE
+  FROM us_details
+  WHERE ID LIKE ? OR FIRST_NAME LIKE ? OR LAST_NAME LIKE ? OR SDN_TYPE LIKE ?
+
+  UNION ALL
+
+  /* 🇺🇸 us_details_v */
+  SELECT
+    CONCAT(FIRSTNAME,' ',LASTNAME) AS NAME,
+    SDNTYPE AS TYPE,
+    'US' AS SOURCE,
+    A_ID AS ID,
+    'us_details_v' AS tableName,
+    CASE
+      WHEN A_ID = ? THEN 100
+      WHEN CONCAT(FIRSTNAME,' ',LASTNAME) LIKE CONCAT(?, '%') THEN 90
+      WHEN CONCAT(FIRSTNAME,' ',LASTNAME) LIKE CONCAT('%', ?, '%') THEN 75
+      ELSE 50
+    END AS SCORE
+  FROM us_details_v
+  WHERE A_ID LIKE ? OR FIRSTNAME LIKE ? OR LASTNAME LIKE ? OR SDNTYPE LIKE ?
+
+  UNION ALL
+
+  /* 🇬🇧 uk_details */
+  SELECT
+    NAME AS NAME,
+    TYPE_ AS TYPE,
+    SOURCE_ AS SOURCE,
+    ID,
+    'uk_details' AS tableName,
+    CASE
+      WHEN ID = ? THEN 100
+      WHEN NAME LIKE CONCAT(?, '%') THEN 90
+      WHEN NAME LIKE CONCAT('%', ?, '%') THEN 75
+      ELSE 50
+    END AS SCORE
+  FROM uk_details
+  WHERE ID LIKE ? OR NAME LIKE ? OR TYPE_ LIKE ? OR SOURCE_ LIKE ?
+
+  UNION ALL
+
+  /* 🇺🇳 un_details */
+  SELECT
+    NAME AS NAME,
+    TYPE_ AS TYPE,
+    SOURCE AS SOURCE,
+    AUTO_ID AS ID,
+    'un_details' AS tableName,
+    CASE
+      WHEN AUTO_ID = ? THEN 100
+      WHEN NAME LIKE CONCAT(?, '%') THEN 90
+      WHEN NAME LIKE CONCAT('%', ?, '%') THEN 75
+      ELSE 50
+    END AS SCORE
+  FROM un_details
+  WHERE AUTO_ID LIKE ? OR NAME LIKE ? OR TYPE_ LIKE ? OR SOURCE LIKE ?
+
+  UNION ALL
+
+  /* 📁 ofac_file_hashes */
+  SELECT
+    FILE_NAME AS NAME,
+    'File' AS TYPE,
+    'OFAC' AS SOURCE,
+    my_row_id AS ID,
+    'ofac_file_hashes' AS tableName,
+    50 AS SCORE
+  FROM ofac_file_hashes
+  WHERE FILE_NAME LIKE ?
+
+) AS combined
+
+ORDER BY SCORE DESC, NAME ASC
+LIMIT ? OFFSET ?;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
