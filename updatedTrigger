@@ -1,0 +1,400 @@
+DROP TRIGGER IF EXISTS trg_us_details_insert;
+DROP TRIGGER IF EXISTS trg_us_details_update;
+DROP TRIGGER IF EXISTS trg_us_details_delete;
+
+DROP TRIGGER IF EXISTS trg_us_details_v_insert;
+DROP TRIGGER IF EXISTS trg_us_details_v_update;
+DROP TRIGGER IF EXISTS trg_us_details_v_delete;
+
+DROP TRIGGER IF EXISTS trg_uk_details_insert;
+DROP TRIGGER IF EXISTS trg_uk_details_update;
+DROP TRIGGER IF EXISTS trg_uk_details_delete;
+
+DROP TRIGGER IF EXISTS trg_un_details_insert;
+DROP TRIGGER IF EXISTS trg_un_details_update;
+DROP TRIGGER IF EXISTS trg_un_details_delete;
+
+DROP TRIGGER IF EXISTS trg_eu_details_insert;
+DROP TRIGGER IF EXISTS trg_eu_details_update;
+DROP TRIGGER IF EXISTS trg_eu_details_delete;
+
+DROP TRIGGER IF EXISTS trg_vessel_insert;
+DROP TRIGGER IF EXISTS trg_vessel_update;
+DROP TRIGGER IF EXISTS trg_vessel_delete;
+DELIMITER $$
+
+/* =========================================================
+   1. us_details
+========================================================= */
+
+CREATE TRIGGER trg_us_details_insert AFTER INSERT ON us_details
+FOR EACH ROW
+BEGIN
+  INSERT INTO sanctions_search_index
+  (NAME, TYPE, SOURCE, ID, DOB, NATIONALITY, tableName, search_text)
+  VALUES (
+    CONCAT_WS(' ', NEW.FIRST_NAME, NEW.LAST_NAME),
+    NEW.SDN_TYPE,
+    'US',
+    CAST(NEW.ID AS CHAR),
+    NULL,
+    NULL,
+    'us_details',
+    CONCAT_WS(' ',
+      NEW.ID, NEW.uid,
+      IFNULL(NEW.FIRST_NAME,''), IFNULL(NEW.LAST_NAME,''),
+      IFNULL(NEW.SDN_TYPE,''), IFNULL(NEW.REMARKS,''),
+      IFNULL(NEW.FULL_DATA,''), IFNULL(NEW.INSERTED_ON,''),
+      IFNULL(NEW.UPDATED_ON,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_us_details_update AFTER UPDATE ON us_details
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.ID AS CHAR) AND tableName='us_details';
+
+  INSERT INTO sanctions_search_index
+  (NAME, TYPE, SOURCE, ID, DOB, NATIONALITY, tableName, search_text)
+  VALUES (
+    CONCAT_WS(' ', NEW.FIRST_NAME, NEW.LAST_NAME),
+    NEW.SDN_TYPE,
+    'US',
+    CAST(NEW.ID AS CHAR),
+    NULL,
+    NULL,
+    'us_details',
+    CONCAT_WS(' ',
+      NEW.ID, NEW.uid,
+      IFNULL(NEW.FIRST_NAME,''), IFNULL(NEW.LAST_NAME,''),
+      IFNULL(NEW.SDN_TYPE,''), IFNULL(NEW.REMARKS,''),
+      IFNULL(NEW.FULL_DATA,''), IFNULL(NEW.INSERTED_ON,''),
+      IFNULL(NEW.UPDATED_ON,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_us_details_delete AFTER DELETE ON us_details
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.ID AS CHAR) AND tableName='us_details';
+END$$
+
+/* =========================================================
+   2. us_details_v
+========================================================= */
+
+CREATE TRIGGER trg_us_details_v_insert AFTER INSERT ON us_details_v
+FOR EACH ROW
+BEGIN
+  INSERT INTO sanctions_search_index
+  VALUES (
+    CONCAT_WS(' ', NEW.FIRSTNAME, NEW.LASTNAME),
+    NEW.SDNTYPE,
+    'US',
+    CAST(NEW.A_ID AS CHAR),
+    NEW.DATEOFBIRTHLIST,
+    NULL,
+    'us_details_v',
+    CONCAT_WS(' ',
+      NEW.A_ID, NEW.ID,
+      IFNULL(NEW.FIRSTNAME,''), IFNULL(NEW.LASTNAME,''),
+      IFNULL(NEW.SDNTYPE,''), IFNULL(NEW.REMARKS,''),
+      IFNULL(NEW.PROGRAM_LIST,''), IFNULL(NEW.IDLIST,''),
+      IFNULL(NEW.AKALIST,''), IFNULL(NEW.ADDRESSLIST,''),
+      IFNULL(NEW.DATEOFBIRTHLIST,''), IFNULL(NEW.PLACEOFBIRTHLIST,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_us_details_v_update AFTER UPDATE ON us_details_v
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.A_ID AS CHAR) AND tableName='us_details_v';
+
+  INSERT INTO sanctions_search_index
+  VALUES (
+    CONCAT_WS(' ', NEW.FIRSTNAME, NEW.LASTNAME),
+    NEW.SDNTYPE,
+    'US',
+    CAST(NEW.A_ID AS CHAR),
+    NEW.DATEOFBIRTHLIST,
+    NULL,
+    'us_details_v',
+    CONCAT_WS(' ',
+      NEW.A_ID, NEW.ID,
+      IFNULL(NEW.FIRSTNAME,''), IFNULL(NEW.LASTNAME,''),
+      IFNULL(NEW.SDNTYPE,''), IFNULL(NEW.REMARKS,''),
+      IFNULL(NEW.PROGRAM_LIST,''), IFNULL(NEW.IDLIST,''),
+      IFNULL(NEW.AKALIST,''), IFNULL(NEW.ADDRESSLIST,''),
+      IFNULL(NEW.DATEOFBIRTHLIST,''), IFNULL(NEW.PLACEOFBIRTHLIST,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_us_details_v_delete AFTER DELETE ON us_details_v
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.A_ID AS CHAR) AND tableName='us_details_v';
+END$$
+
+/* =========================================================
+   3. uk_details
+========================================================= */
+
+CREATE TRIGGER trg_uk_details_insert AFTER INSERT ON uk_details
+FOR EACH ROW
+BEGIN
+  INSERT INTO sanctions_search_index VALUES (
+    NEW.NAME,
+    NEW.TYPE_,
+    NEW.SOURCE_,
+    CAST(NEW.ID AS CHAR),
+    NEW.DOB,
+    NEW.NATIONALITY,
+    'uk_details',
+    CONCAT_WS(' ',
+      NEW.ID,
+      IFNULL(NEW.SOURCE_,''), IFNULL(NEW.NAME,''), IFNULL(NEW.TYPE_,''),
+      IFNULL(NEW.NAME_NON_LATIN_SCRIPT,''), IFNULL(NEW.DOB,''),
+      IFNULL(NEW.POB,''), IFNULL(NEW.GOOD_QUALITY_AKA,''),
+      IFNULL(NEW.NATIONALITY,''), IFNULL(NEW.ADDRESS,''),
+      IFNULL(NEW.POSITION_,''), IFNULL(NEW.TITLE,''),
+      IFNULL(NEW.OTHER_INFORMATION,''), IFNULL(NEW.UK_SANCTIONS_LIST,''),
+      IFNULL(NEW.LAST_UPDATED,''), IFNULL(NEW.GROUP_ID,''),
+      IFNULL(NEW.LISTED_ON,''), IFNULL(NEW.AKA,''),
+      IFNULL(NEW.INSERTED_ON,''), IFNULL(NEW.UPDATED_ON,''),
+      IFNULL(NEW.LOW_QUALITY_AKA,''), IFNULL(NEW.PASSPORT_NUMBER,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_uk_details_update AFTER UPDATE ON uk_details
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.ID AS CHAR) AND tableName='uk_details';
+
+  INSERT INTO sanctions_search_index VALUES (
+    NEW.NAME,
+    NEW.TYPE_,
+    NEW.SOURCE_,
+    CAST(NEW.ID AS CHAR),
+    NEW.DOB,
+    NEW.NATIONALITY,
+    'uk_details',
+    CONCAT_WS(' ',
+      NEW.ID,
+      IFNULL(NEW.SOURCE_,''), IFNULL(NEW.NAME,''), IFNULL(NEW.TYPE_,''),
+      IFNULL(NEW.NAME_NON_LATIN_SCRIPT,''), IFNULL(NEW.DOB,''),
+      IFNULL(NEW.POB,''), IFNULL(NEW.GOOD_QUALITY_AKA,''),
+      IFNULL(NEW.NATIONALITY,''), IFNULL(NEW.ADDRESS,''),
+      IFNULL(NEW.POSITION_,''), IFNULL(NEW.TITLE,''),
+      IFNULL(NEW.OTHER_INFORMATION,''), IFNULL(NEW.UK_SANCTIONS_LIST,''),
+      IFNULL(NEW.LAST_UPDATED,''), IFNULL(NEW.GROUP_ID,''),
+      IFNULL(NEW.LISTED_ON,''), IFNULL(NEW.AKA,''),
+      IFNULL(NEW.INSERTED_ON,''), IFNULL(NEW.UPDATED_ON,''),
+      IFNULL(NEW.LOW_QUALITY_AKA,''), IFNULL(NEW.PASSPORT_NUMBER,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_uk_details_delete AFTER DELETE ON uk_details
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.ID AS CHAR) AND tableName='uk_details';
+END$$
+
+/* =========================================================
+   4. un_details
+========================================================= */
+
+CREATE TRIGGER trg_un_details_insert AFTER INSERT ON un_details
+FOR EACH ROW
+BEGIN
+  INSERT INTO sanctions_search_index VALUES (
+    NEW.NAME,
+    NEW.TYPE_,
+    NEW.SOURCE,
+    CAST(NEW.AUTO_ID AS CHAR),
+    NEW.DOB,
+    NEW.NATIONALITY,
+    'un_details',
+    CONCAT_WS(' ',
+      NEW.AUTO_ID,
+      IFNULL(NEW.ID,''), IFNULL(NEW.TYPE_,''), IFNULL(NEW.NAME,''),
+      IFNULL(NEW.NAME_ORIGINAL_SCRIPT,''), IFNULL(NEW.TITLE,''),
+      IFNULL(NEW.DESIGNATION,''), IFNULL(NEW.DOB,''),
+      IFNULL(NEW.POB,''), IFNULL(NEW.GOOD_QUALITY_AKA,''),
+      IFNULL(NEW.LOW_QUALITY_AKA,''), IFNULL(NEW.NATIONALITY,''),
+      IFNULL(NEW.PASSPORT_NO,''), IFNULL(NEW.NATIONAL_IDENTITY_NO,''),
+      IFNULL(NEW.ADDRESS,''), IFNULL(NEW.LISTED_ON,''),
+      IFNULL(NEW.OTHER_INFORMATION,''), IFNULL(NEW.SOURCE,''),
+      IFNULL(NEW.AKA,''), IFNULL(NEW.FKA,''),
+      IFNULL(NEW.INSERTED_ON,''), IFNULL(NEW.UPDATED_ON,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_un_details_update AFTER UPDATE ON un_details
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.AUTO_ID AS CHAR) AND tableName='un_details';
+
+  INSERT INTO sanctions_search_index VALUES (
+    NEW.NAME,
+    NEW.TYPE_,
+    NEW.SOURCE,
+    CAST(NEW.AUTO_ID AS CHAR),
+    NEW.DOB,
+    NEW.NATIONALITY,
+    'un_details',
+    CONCAT_WS(' ',
+      NEW.AUTO_ID,
+      IFNULL(NEW.ID,''), IFNULL(NEW.TYPE_,''), IFNULL(NEW.NAME,''),
+      IFNULL(NEW.NAME_ORIGINAL_SCRIPT,''), IFNULL(NEW.TITLE,''),
+      IFNULL(NEW.DESIGNATION,''), IFNULL(NEW.DOB,''),
+      IFNULL(NEW.POB,''), IFNULL(NEW.GOOD_QUALITY_AKA,''),
+      IFNULL(NEW.LOW_QUALITY_AKA,''), IFNULL(NEW.NATIONALITY,''),
+      IFNULL(NEW.PASSPORT_NO,''), IFNULL(NEW.NATIONAL_IDENTITY_NO,''),
+      IFNULL(NEW.ADDRESS,''), IFNULL(NEW.LISTED_ON,''),
+      IFNULL(NEW.OTHER_INFORMATION,''), IFNULL(NEW.SOURCE,''),
+      IFNULL(NEW.AKA,''), IFNULL(NEW.FKA,''),
+      IFNULL(NEW.INSERTED_ON,''), IFNULL(NEW.UPDATED_ON,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_un_details_delete AFTER DELETE ON un_details
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.AUTO_ID AS CHAR) AND tableName='un_details';
+END$$
+
+/* =========================================================
+   5. eu_details
+========================================================= */
+
+CREATE TRIGGER trg_eu_details_insert AFTER INSERT ON eu_details
+FOR EACH ROW
+BEGIN
+  INSERT INTO sanctions_search_index VALUES (
+    NEW.COMPANY_NAME,
+    NEW.PROGRAMME,
+    NEW.SOURCE_,
+    CAST(NEW.ID AS CHAR),
+    NULL,
+    NULL,
+    'eu_details',
+    CONCAT_WS(' ',
+      NEW.ID,
+      IFNULL(NEW.EU_ID,''), IFNULL(NEW.SOURCE_,''),
+      IFNULL(NEW.LEGAL_BASIS,''), IFNULL(NEW.PROGRAMME,''),
+      IFNULL(NEW.IDENTITY_INFORMATION,''), IFNULL(NEW.BIRTH_INFORMATION,''),
+      IFNULL(NEW.CONTACT_INFORMATION,''), IFNULL(NEW.CITIZENSHIP_INFORMATION,''),
+      IFNULL(NEW.IDENTIFICATION_DOCU_INFO,''), IFNULL(NEW.REMARK,''),
+      IFNULL(NEW.COMPANY_NAME,''), IFNULL(NEW.INSERTED_ON,''),
+      IFNULL(NEW.UPDATED_ON,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_eu_details_update AFTER UPDATE ON eu_details
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.ID AS CHAR) AND tableName='eu_details';
+
+  INSERT INTO sanctions_search_index VALUES (
+    NEW.COMPANY_NAME,
+    NEW.PROGRAMME,
+    NEW.SOURCE_,
+    CAST(NEW.ID AS CHAR),
+    NULL,
+    NULL,
+    'eu_details',
+    CONCAT_WS(' ',
+      NEW.ID,
+      IFNULL(NEW.EU_ID,''), IFNULL(NEW.SOURCE_,''),
+      IFNULL(NEW.LEGAL_BASIS,''), IFNULL(NEW.PROGRAMME,''),
+      IFNULL(NEW.IDENTITY_INFORMATION,''), IFNULL(NEW.BIRTH_INFORMATION,''),
+      IFNULL(NEW.CONTACT_INFORMATION,''), IFNULL(NEW.CITIZENSHIP_INFORMATION,''),
+      IFNULL(NEW.IDENTIFICATION_DOCU_INFO,''), IFNULL(NEW.REMARK,''),
+      IFNULL(NEW.COMPANY_NAME,''), IFNULL(NEW.INSERTED_ON,''),
+      IFNULL(NEW.UPDATED_ON,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_eu_details_delete AFTER DELETE ON eu_details
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.ID AS CHAR) AND tableName='eu_details';
+END$$
+
+/* =========================================================
+   6. eu_sanctioned_vessels_test
+========================================================= */
+
+CREATE TRIGGER trg_vessel_insert AFTER INSERT ON eu_sanctioned_vessels_test
+FOR EACH ROW
+BEGIN
+  INSERT INTO sanctions_search_index VALUES (
+    NEW.VESSEL_NAME,
+    'Vessel',
+    NEW.SOURCE,
+    CAST(NEW.ID AS CHAR),
+    NULL,
+    NULL,
+    'eu_sanctioned_vessels_test',
+    CONCAT_WS(' ',
+      NEW.ID, NEW.DOC_SRNO,
+      IFNULL(NEW.VESSEL_NAME,''), IFNULL(NEW.IMO,''),
+      IFNULL(NEW.SOURCE,''), IFNULL(NEW.EU_JOURNAL_LINK,''),
+      IFNULL(NEW.DATE_OF_APPLICATION,''), IFNULL(NEW.INSERTED_ON,''),
+      IFNULL(NEW.UPDATED_ON,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_vessel_update AFTER UPDATE ON eu_sanctioned_vessels_test
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.ID AS CHAR) AND tableName='eu_sanctioned_vessels_test';
+
+  INSERT INTO sanctions_search_index VALUES (
+    NEW.VESSEL_NAME,
+    'Vessel',
+    NEW.SOURCE,
+    CAST(NEW.ID AS CHAR),
+    NULL,
+    NULL,
+    'eu_sanctioned_vessels_test',
+    CONCAT_WS(' ',
+      NEW.ID, NEW.DOC_SRNO,
+      IFNULL(NEW.VESSEL_NAME,''), IFNULL(NEW.IMO,''),
+      IFNULL(NEW.SOURCE,''), IFNULL(NEW.EU_JOURNAL_LINK,''),
+      IFNULL(NEW.DATE_OF_APPLICATION,''), IFNULL(NEW.INSERTED_ON,''),
+      IFNULL(NEW.UPDATED_ON,'')
+    )
+  );
+END$$
+
+CREATE TRIGGER trg_vessel_delete AFTER DELETE ON eu_sanctioned_vessels_test
+FOR EACH ROW
+BEGIN
+  DELETE FROM sanctions_search_index
+  WHERE ID=CAST(OLD.ID AS CHAR) AND tableName='eu_sanctioned_vessels_test';
+END$$
+
+DELIMITER ;
